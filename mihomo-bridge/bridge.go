@@ -5,6 +5,8 @@ import (
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/listener/inbound"
 	"github.com/metacubex/mihomo/tunnel"
+
+	_ "golang.org/x/mobile/bind"
 )
 
 var currentTun *inbound.Tun

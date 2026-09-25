@@ -17,7 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.x'
+          go-version: '1.25.x'
       - name: Setup Android env
         run: |
           echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
@@ -36,8 +36,7 @@ jobs:
         run: |
           mkdir -p ../app/libs
           go get golang.org/x/mobile/bind@latest
-          go get golang.org/x/mobile/cmd/gobind@latest
-          go mod tidy
+          go get -tool golang.org/x/mobile/cmd/gobind@latest
           gomobile bind -v -target=android/arm64 -androidapi 26 -o ../app/libs/mihomo.aar .
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
