@@ -3,7 +3,6 @@ package com.watchclash.app
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.net.VpnService
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -37,7 +36,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var subStatus: TextView
 
     private var running = false
-    private val VPN_REQ = 1001
 
     // MD3 主色（与 themes.xml 保持一致）
     private val colorOn  = Color.parseColor("#4DD0E1")
@@ -161,25 +159,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun onToggle() {
         if (!running) {
-            val intent = VpnService.prepare(this)
-            if (intent != null) {
-                startActivityForResult(intent, VPN_REQ)
-            } else {
-                startVpn()
-            }
+            startVpn()
         } else {
             stopVpn()
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == VPN_REQ) {
-            if (resultCode == RESULT_OK) {
-                startVpn()
-            } else {
-                statusText.text = "VPN 授权被拒绝"
-            }
         }
     }
 

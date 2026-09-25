@@ -4,14 +4,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
-import android.net.VpnService
 import android.os.Build
-import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
 import mihomo.Mihomo
 import java.io.File
 
-class ClashVpnService : VpnService() {
+class ClashVpnService : android.app.Service() {
 
     companion object {
         const val ACTION_START = "com.watchclash.app.START"
@@ -19,8 +17,6 @@ class ClashVpnService : VpnService() {
         private const val CH_ID = "clash_vpn"
         private const val NOTI_ID = 1
     }
-
-    private var tunFd: ParcelFileDescriptor? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -32,49 +28,21 @@ class ClashVpnService : VpnService() {
 
     private fun startVpn() {
         startForeground(NOTI_ID, buildNotification())
-
-        // 首启解压 geo 文件
         GeoInstaller.ensureGeo(this)
-
-        // 建 tun
-        val builder = Builder()
-            .setSession("WatchClash")
-            .addAddress("172.19.0.1", 30)
-            .addRoute("0.0.0.0", 0)
-            .addDnsServer("172.19.0.2")
-            .setBlocking(true)
-            .addDisallowedApplication(packageName)
-
-        val pfd = builder.establish() ?: run {
-            stopSelf()
-            return
-        }
-        tunFd = pfd
-
-        // 把 fd 交给 Go 内核（gomobile 生成的类名 = mihomo.Mihomo）
         val homeDir = filesDir.absolutePath
         val cfgPath = File(filesDir, "config.yaml").absolutePath
-        val err = Mihomo.start(homeDir, cfgPath, pfd.fd.toLong(), "gvisor")
-
-        if (err.isNotEmpty()) {
-            pfd.close()
-            tunFd = null
-            updateNotification("启动失败: $err")
-        }
+        val err = Mihomo.start(homeDir, cfgPath, -1L, "")
+        if (err.isNotEmpty()) { updateNotification("启动失败: " + err) } else { updateNotification("本地代理已启动") }
     }
 
     private fun stopVpn() {
         Mihomo.stop()
-        tunFd?.close()
-        tunFd = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
     override fun onDestroy() {
         Mihomo.stop()
-        tunFd?.close()
-        tunFd = null
         super.onDestroy()
     }
 
