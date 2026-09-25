@@ -18,6 +18,9 @@ class ClashVpnService : android.app.Service() {
         private const val NOTI_ID = 1
     }
 
+    // 纯本地代理模式：不支持 bind，返回 null
+    override fun onBind(intent: Intent?): android.os.IBinder? = null
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startVpn()
