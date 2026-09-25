@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -17,15 +18,6 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlin.concurrent.thread
 
-/**
- * WatchClash 主界面 —— Material 3 圆屏适配版
- *
- * 设计要点（Wear OS 圆屏）：
- *  - Box + Gravity.CENTER 让内容居于圆屏内切圆，避免被裁切
- *  - 整体包一层 ScrollView，小屏也不至于顶出屏幕
- *  - 使用 MD3 组件：MaterialButton / TextInputLayout
- *  - 顶部一个状态圆点（GradientDrawable 动态着色）直观显示连接状态
- */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var statusDot: View
@@ -34,32 +26,40 @@ class MainActivity : AppCompatActivity() {
     private lateinit var subEdit: TextInputEditText
     private lateinit var subBtn: MaterialButton
     private lateinit var subStatus: TextView
-
+    private lateinit var proxyHostEdit: TextInputEditText
+    private lateinit var proxyPortEdit: TextInputEditText
+    private lateinit var proxyBtn: MaterialButton
+    private lateinit var proxyStatus: TextView
     private var running = false
 
-    // MD3 主色（与 themes.xml 保持一致）
-    private val colorOn  = Color.parseColor("#4DD0E1")
-    private val colorOff = Color.parseColor("#7A7A7A")
+    private val colorOn   = Color.parseColor("#4DD0E1")
+    private val colorOff  = Color.parseColor("#7A7A7A")
+    private val colorCard = Color.parseColor("#1E2A32")
+    private val colorCardStroke = Color.parseColor("#2E4550")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ---------- 根容器：居中，保证落在圆屏内切范围 ----------
         val outer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setPadding(dp(18), dp(18), dp(18), dp(18))
+            setPadding(dp(14), dp(14), dp(14), dp(14))
         }
-
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
         }
 
-        // ---------- 状态圆点 ----------
+        val icon = ImageView(this).apply {
+            setImageResource(R.drawable.rocket)
+            val lp = LinearLayout.LayoutParams(dp(30), dp(30))
+            lp.bottomMargin = dp(6)
+            layoutParams = lp
+        }
+
         statusDot = View(this).apply {
-            val lp = LinearLayout.LayoutParams(dp(14), dp(14))
-            lp.bottomMargin = dp(8)
+            val lp = LinearLayout.LayoutParams(dp(12), dp(12))
+            lp.bottomMargin = dp(6)
             layoutParams = lp
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
@@ -67,76 +67,124 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // ---------- 状态文字 ----------
         statusText = TextView(this).apply {
             text = "未连接"
-            textSize = 17f
+            textSize = 18f
             gravity = Gravity.CENTER
+            setTextColor(Color.parseColor("#E0F7FA"))
         }
 
-        // ---------- 启动/停止 按钮（MD3 药丸） ----------
         toggleBtn = MaterialButton(this).apply {
             text = "启动"
             isAllCaps = false
-            textSize = 16f
+            textSize = 17f
+            cornerRadius = dp(24)
             val lp = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            lp.topMargin = dp(14)
+            lp.topMargin = dp(12)
             layoutParams = lp
             setOnClickListener { onToggle() }
         }
 
-        // ---------- 订阅输入框（MD3 TextInputLayout） ----------
+        proxyHostEdit = TextInputEditText(this).apply {
+            hint = "127.0.0.1"
+            textSize = 12f
+            isSingleLine = true
+            setText(ProxyStore.loadHost(this@MainActivity))
+        }
+        val hostLayout = TextInputLayout(this).apply {
+            hint = "代理地址"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            addView(proxyHostEdit)
+        }
+        proxyPortEdit = TextInputEditText(this).apply {
+            hint = "7890"
+            textSize = 12f
+            isSingleLine = true
+            setText(ProxyStore.loadPort(this@MainActivity))
+        }
+        val portLayout = TextInputLayout(this).apply {
+            hint = "端口"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            val lp = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dp(8)
+            layoutParams = lp
+            addView(proxyPortEdit)
+        }
+        proxyBtn = MaterialButton(this).apply {
+            text = "保存代理地址"
+            isAllCaps = false
+            textSize = 14f
+            cornerRadius = dp(20)
+            val lp = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dp(8)
+            layoutParams = lp
+            setOnClickListener { onSaveProxy() }
+        }
+        proxyStatus = TextView(this).apply {
+            text = "其它 App 代理填：" + ProxyStore.display(this@MainActivity)
+            textSize = 11f
+            gravity = Gravity.CENTER
+            setTextColor(Color.parseColor("#80CBC4"))
+            setPadding(0, dp(6), 0, 0)
+        }
+        val proxyCard = makeCard()
+        proxyCard.addView(hostLayout)
+        proxyCard.addView(portLayout)
+        proxyCard.addView(proxyBtn)
+        proxyCard.addView(proxyStatus)
+
         val subEditHolder = TextInputEditText(this).apply {
             hint = "https://.../subscribe?token=..."
             textSize = 12f
             isSingleLine = false
             setText(SubscriptionManager.loadUrl(this@MainActivity))
         }
+        subEdit = subEditHolder
         val subLayout = TextInputLayout(this).apply {
             hint = "订阅链接"
             boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
-            val lp = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            lp.topMargin = dp(20)
-            layoutParams = lp
             addView(subEditHolder)
         }
-        @Suppress("UNCHECKED_CAST")
-        subEdit = subEditHolder
-
-        // ---------- 更新订阅 按钮 ----------
         subBtn = MaterialButton(this).apply {
             text = "更新订阅"
             isAllCaps = false
             textSize = 14f
+            cornerRadius = dp(20)
             val lp = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            lp.topMargin = dp(10)
+            lp.topMargin = dp(8)
             layoutParams = lp
             setOnClickListener { onUpdateSub() }
         }
-
-        // ---------- 订阅状态 ----------
         subStatus = TextView(this).apply {
             text = ""
             textSize = 11f
             gravity = Gravity.CENTER
-            setPadding(0, dp(8), 0, 0)
+            setTextColor(Color.parseColor("#80CBC4"))
+            setPadding(0, dp(6), 0, 0)
         }
+        val subCard = makeCard()
+        subCard.addView(subLayout)
+        subCard.addView(subBtn)
+        subCard.addView(subStatus)
 
+        col.addView(icon)
         col.addView(statusDot)
         col.addView(statusText)
         col.addView(toggleBtn)
-        col.addView(subLayout)
-        col.addView(subBtn)
-        col.addView(subStatus)
+        col.addView(proxyCard, cardLp())
+        col.addView(subCard, cardLp())
 
         val scroll = ScrollView(this).apply {
             isFillViewport = true
@@ -145,27 +193,48 @@ class MainActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ))
         }
-
         outer.addView(scroll, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         ))
-
         setContentView(outer)
         updateUi()
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
-    private fun onToggle() {
-        if (!running) {
-            startVpn()
-        } else {
-            stopVpn()
+    private fun makeCard(): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(12), dp(12), dp(12))
+            background = GradientDrawable().apply {
+                cornerRadius = dp(18).toFloat()
+                setColor(colorCard)
+                setStroke(dp(1), colorCardStroke)
+            }
         }
     }
 
-    /** 下载订阅（后台线程），完成后回主线程提示 */
+    private fun cardLp(): LinearLayout.LayoutParams {
+        return LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = dp(12) }
+    }
+
+    private fun onToggle() {
+        if (!running) startVpn() else stopVpn()
+    }
+
+    private fun onSaveProxy() {
+        val host = proxyHostEdit.text.toString().trim()
+        val port = proxyPortEdit.text.toString().trim()
+        ProxyStore.save(this, host, port)
+        val d = ProxyStore.display(this)
+        proxyStatus.text = "已保存：" + d + "\n其它 App 代理填这个"
+        Toast.makeText(this, "代理地址已保存", Toast.LENGTH_SHORT).show()
+    }
+
     private fun onUpdateSub() {
         val url = subEdit.text.toString().trim()
         subStatus.text = "下载中..."
@@ -176,11 +245,11 @@ class MainActivity : AppCompatActivity() {
                 subBtn.isEnabled = true
                 when (res) {
                     is SubscriptionManager.Result.Ok -> {
-                        subStatus.text = "订阅已更新（${res.bytes} 字符）\n重启 VPN 后生效"
+                        subStatus.text = "订阅已更新（" + res.bytes + " 字符）\n重启 VPN 后生效"
                         Toast.makeText(this, "订阅更新成功", Toast.LENGTH_SHORT).show()
                     }
                     is SubscriptionManager.Result.Err -> {
-                        subStatus.text = "失败: ${res.msg}"
+                        subStatus.text = "失败: " + res.msg
                     }
                 }
             }

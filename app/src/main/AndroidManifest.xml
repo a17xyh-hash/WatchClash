@@ -11,6 +11,8 @@
 
     <application
         android:allowBackup="false"
+        android:icon="@drawable/rocket"
+        android:roundIcon="@drawable/rocket"
         android:label="WatchClash"
         android:theme="@style/Theme.WatchClash">
 
