@@ -8,6 +8,7 @@ import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
+import mihomo.Mihomo
 import java.io.File
 
 class ClashVpnService : VpnService() {
@@ -50,7 +51,7 @@ class ClashVpnService : VpnService() {
         }
         tunFd = pfd
 
-        // 把 fd 交给 Go 内核（gomobile 生成的类名 = Main）
+        // 把 fd 交给 Go 内核（gomobile 生成的类名 = mihomo.Mihomo）
         val homeDir = filesDir.absolutePath
         val cfgPath = File(filesDir, "config.yaml").absolutePath
         val err = Mihomo.start(homeDir, cfgPath, pfd.fd, "gvisor")
@@ -86,7 +87,7 @@ class ClashVpnService : VpnService() {
         return NotificationCompat.Builder(this, CH_ID)
             .setContentTitle("WatchClash")
             .setContentText("运行中")
-            .setSmallIcon(android.R.drawable.stat_sys_vpn_ic)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .build()
     }
 
@@ -95,7 +96,7 @@ class ClashVpnService : VpnService() {
         mgr.notify(NOTI_ID, NotificationCompat.Builder(this, CH_ID)
             .setContentTitle("WatchClash")
             .setContentText(text)
-            .setSmallIcon(android.R.drawable.stat_sys_vpn_ic)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .build())
     }
 }
