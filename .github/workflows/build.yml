@@ -37,7 +37,7 @@ jobs:
           mkdir -p ../app/libs
           go get golang.org/x/mobile/bind@latest
           go get -tool golang.org/x/mobile/cmd/gobind@latest
-          gomobile bind -v -target=android/arm64 -androidapi 26 -o ../app/libs/mihomo.aar .
+          gomobile bind -v -target=android/arm,android/arm64 -androidapi 26 -o ../app/libs/mihomo.aar .
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
       - name: Build Debug APK
