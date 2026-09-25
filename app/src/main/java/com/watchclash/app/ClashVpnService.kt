@@ -53,7 +53,7 @@ class ClashVpnService : VpnService() {
         // 把 fd 交给 Go 内核（gomobile 生成的类名 = Main）
         val homeDir = filesDir.absolutePath
         val cfgPath = File(filesDir, "config.yaml").absolutePath
-        val err = Main.start(homeDir, cfgPath, pfd.fd, "gvisor")
+        val err = Mihomo.start(homeDir, cfgPath, pfd.fd, "gvisor")
 
         if (err.isNotEmpty()) {
             pfd.close()
@@ -63,7 +63,7 @@ class ClashVpnService : VpnService() {
     }
 
     private fun stopVpn() {
-        Main.stop()
+        Mihomo.stop()
         tunFd?.close()
         tunFd = null
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -71,7 +71,7 @@ class ClashVpnService : VpnService() {
     }
 
     override fun onDestroy() {
-        Main.stop()
+        Mihomo.stop()
         tunFd?.close()
         tunFd = null
         super.onDestroy()
