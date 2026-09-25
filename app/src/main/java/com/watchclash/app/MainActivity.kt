@@ -12,8 +12,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.widget.BoxInsetLayout
-import androidx.wear.widget.RotaryScrollView
+import androidx.wear.widget.WearableRecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
@@ -191,21 +192,21 @@ class MainActivity : AppCompatActivity() {
         col.addView(proxyCard, cardLp())
         col.addView(subCard, cardLp())
 
-        // RotaryScrollView：表冠旋转 -> 滚动；滚动条跟随显示
-        val scroll = RotaryScrollView(this).apply {
-            isFillViewport = true
-            isScrollbarFadingEnabled = false
-            isVerticalScrollBarEnabled = true
-            addView(col, LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ))
+        // WearableRecyclerView：表冠旋转 -> 滚动；自带滚动条
+        val list = WearableRecyclerView(this).apply {
+            layoutManager = androidx.wear.widget.WearableLinearLayoutManager(this@MainActivity)
+            setCircularScrollingGestureEnabled(true)   // 弧形边缘滑动
+            setScrollDegreesPerScreen(180f)            // 表冠旋转灵敏度
+            setEdgeItemsCenteringEnabled(false)
+            isFocusable = true                          // 允许表冠聚焦
+            setHasFixedSize(false)
+            adapter = SingleItemAdapter(col)
         }
-        val scrollLp = BoxInsetLayout.LayoutParams(
+        val listLp = BoxInsetLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
-        outer.addView(scroll, scrollLp)
+        outer.addView(list, listLp)
         setContentView(outer)
         updateUi()
     }
@@ -297,5 +298,26 @@ class MainActivity : AppCompatActivity() {
         statusText.text = if (running) "已连接" else "未连接"
         toggleBtn.text = if (running) "停止" else "启动"
         (statusDot.background as? GradientDrawable)?.setColor(if (running) colorOn else colorOff)
+    }
+
+    /** 单 item Adapter：把整列内容当作 RecyclerView 的唯一一项，
+     *  从而让 WearableRecyclerView 接管滚动/表冠旋转，并显示滚动条。 */
+    private class SingleItemAdapter(private val content: View) :
+        RecyclerView.Adapter<SingleItemAdapter.VH>() {
+
+        class VH(v: View) : RecyclerView.ViewHolder(v)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            // 确保 content 有正确的 LayoutParams
+            content.layoutParams = RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            return VH(content)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {}
+
+        override fun getItemCount(): Int = 1
     }
 }
