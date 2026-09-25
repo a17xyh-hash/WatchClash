@@ -14,6 +14,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlin.concurrent.thread
@@ -137,10 +138,11 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, dp(6), 0, 0)
         }
         val proxyCard = makeCard()
-        proxyCard.addView(hostLayout)
-        proxyCard.addView(portLayout)
-        proxyCard.addView(proxyBtn)
-        proxyCard.addView(proxyStatus)
+        val proxyInner = proxyCard.inner()
+        proxyInner.addView(hostLayout)
+        proxyInner.addView(portLayout)
+        proxyInner.addView(proxyBtn)
+        proxyInner.addView(proxyStatus)
 
         val subEditHolder = TextInputEditText(this).apply {
             hint = "https://.../subscribe?token=..."
@@ -175,9 +177,10 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, dp(6), 0, 0)
         }
         val subCard = makeCard()
-        subCard.addView(subLayout)
-        subCard.addView(subBtn)
-        subCard.addView(subStatus)
+        val subInner = subCard.inner()
+        subInner.addView(subLayout)
+        subInner.addView(subBtn)
+        subInner.addView(subStatus)
 
         col.addView(icon)
         col.addView(statusDot)
@@ -203,16 +206,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
-    private fun makeCard(): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(12), dp(12), dp(12))
-            background = GradientDrawable().apply {
-                cornerRadius = dp(18).toFloat()
-                setColor(colorCard)
-                setStroke(dp(1), colorCardStroke)
-            }
+    private fun makeCard(): MaterialCardView {
+        val card = MaterialCardView(this).apply {
+            radius = dp(18).toFloat()
+            cardElevation = dp(2).toFloat()
+            strokeWidth = dp(1)
+            strokeColor = colorCardStroke
+            setCardBackgroundColor(colorCard)
+            setContentPadding(dp(12), dp(12), dp(12), dp(12))
         }
+        val inner = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        card.addView(inner)
+        return card
+    }
+
+    /** 取卡片内部容器以便继续 addView */
+    private fun MaterialCardView.inner(): LinearLayout {
+        return getChildAt(0) as LinearLayout
     }
 
     private fun cardLp(): LinearLayout.LayoutParams {
