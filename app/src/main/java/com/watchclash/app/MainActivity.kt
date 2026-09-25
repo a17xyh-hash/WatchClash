@@ -9,10 +9,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.wear.widget.BoxInsetLayout
+import androidx.wear.widget.RotaryScrollView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
@@ -41,14 +42,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val outer = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(dp(14), dp(14), dp(14), dp(14))
+        // 圆屏适配：BoxInsetLayout 自动处理圆屏四角安全边距
+        val outer = BoxInsetLayout(this).apply {
+            setBackgroundColor(Color.parseColor("#101A20"))
         }
+        // 圆屏内容列：左右各留 14dp 边距，避免被圆边裁切
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(14), dp(8), dp(14), dp(8))
         }
 
         val icon = ImageView(this).apply {
@@ -189,17 +191,21 @@ class MainActivity : AppCompatActivity() {
         col.addView(proxyCard, cardLp())
         col.addView(subCard, cardLp())
 
-        val scroll = ScrollView(this).apply {
+        // RotaryScrollView：表冠旋转 -> 滚动；滚动条跟随显示
+        val scroll = RotaryScrollView(this).apply {
             isFillViewport = true
+            isScrollbarFadingEnabled = false
+            isVerticalScrollBarEnabled = true
             addView(col, LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ))
         }
-        outer.addView(scroll, LinearLayout.LayoutParams(
+        val scrollLp = BoxInsetLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
-        ))
+        )
+        outer.addView(scroll, scrollLp)
         setContentView(outer)
         updateUi()
     }
