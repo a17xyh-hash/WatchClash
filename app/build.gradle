@@ -36,10 +36,6 @@ android {
         jvmTarget = '17'
     }
 
-    // 告诉 AGP 去哪找 libs/mihomo.aar
-    repositories {
-        flatDir { dirs 'libs' }
-    }
 }
 
 dependencies {
@@ -47,5 +43,5 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
 
     // gomobile 编出来的 mihomo.aar（CI 第 5 步产出）
-    implementation(name: 'mihomo', ext: 'aar')
+    implementation files('libs/mihomo.aar')
 }
