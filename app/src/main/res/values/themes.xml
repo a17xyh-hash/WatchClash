@@ -1,3 +1,10 @@
 <resources>
-    <style name="Theme.WatchClash" parent="android:Theme.Material.NoActionBar" />
+    <style name="Theme.WatchClash" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="colorPrimary">#4DD0E1</item>
+        <item name="colorOnPrimary">#00363D</item>
+        <item name="colorSecondary">#80CBC4</item>
+    </style>
 </resources>
