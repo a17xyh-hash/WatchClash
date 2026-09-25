@@ -54,7 +54,7 @@ class ClashVpnService : VpnService() {
         // 把 fd 交给 Go 内核（gomobile 生成的类名 = mihomo.Mihomo）
         val homeDir = filesDir.absolutePath
         val cfgPath = File(filesDir, "config.yaml").absolutePath
-        val err = Mihomo.start(homeDir, cfgPath, pfd.fd, "gvisor")
+        val err = Mihomo.start(homeDir, cfgPath, pfd.fd.toLong(), "gvisor")
 
         if (err.isNotEmpty()) {
             pfd.close()
