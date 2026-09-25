@@ -34,6 +34,8 @@ jobs:
         working-directory: ./mihomo-bridge
         run: |
           mkdir -p ../app/libs
+          go get golang.org/x/mobile/bind@latest
+          go get golang.org/x/mobile/cmd/gobind@latest
           go mod tidy
           gomobile bind -v -target=android/arm64 -androidapi 26 -o ../app/libs/mihomo.aar .
       - name: Set up Gradle
